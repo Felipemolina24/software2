@@ -1,17 +1,16 @@
+import datetime as dt
 import json
 import os.path
-import datetime as dt
-from typing import Dict, Optional
-
-import requests
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-import pytz
 
 # from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 from pprint import pprint
+from typing import Dict, Optional
+
+import pytz
+import requests
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
@@ -19,6 +18,31 @@ SCOPES = ["https://www.googleapis.com/auth/calendar"]
 class GoogleCalendarManager:
     def __init__(self):
         self._token = self._authenticate()
+
+    def check_availability(self, start_time: str, end_time: str) -> bool:
+        token = self._token["token"]
+        url = f"https://www.googleapis.com/calendar/v3/calendars/primary/events"
+        headers = {"Authorization": f"Bearer {token}"}
+
+        response = requests.get(
+            url,
+            headers=headers,
+            params={
+                "timeMin": start_time,
+                "timeMax": end_time,
+                "maxResults": 1
+            },
+        )
+
+        print("Check Availability Response:")
+        print(response.json())
+
+        if response.status_code == 200:
+            events = response.json().get("items", [])
+            return not events  # Si no hay eventos, el horario está disponible
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
+            return False
 
     @staticmethod
     def _authenticate() -> Dict:
@@ -80,6 +104,7 @@ class GoogleCalendarManager:
                 for event in events:
                     start = event["start"].get("dateTime", event["start"].get("date"))
                     print(f"{start} - {event['summary']}")
+                return events
         else:
             print(f"Error: {response.status_code} - {response.text}")
 
@@ -118,7 +143,52 @@ class GoogleCalendarManager:
             print(f"Error: {response.status_code} - {response.text}")
             return None
 
+    def add_event(
+        self,
+        summary: str,
+        start_time: str,
+        end_time: str,
+        description: Optional[str] = None,
+    ):
+        token = self._token["token"]
+        url = f"https://www.googleapis.com/calendar/v3/calendars/primary/events"
+        headers = {"Authorization": f"Bearer {token}"}
+
+        event_body = {
+            "summary": summary,
+            "start": {
+                "dateTime": start_time,
+                "timeZone": "America/Bogota"
+            },
+            "end": {
+                "dateTime": end_time,
+                "timeZone": "America/Bogota"
+            },
+        }
+
+        if description:
+            event_body["description"] = description
+
+        response = requests.post(url, headers=headers, json=event_body)
+
+        if response.status_code == 200:
+            print("Event added successfully.")
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
+
+
+start_time = (dt.datetime.now() + dt.timedelta(days=1)).isoformat() + "Z"  # Tomorrow
+end_time = (
+    dt.datetime.now() + dt.timedelta(days=1, hours=2)
+).isoformat() + "Z"  # 2 hours later
+
 
 calendar = GoogleCalendarManager()
 calendar.get_free_busy_agenda()
-# calendar.list_upcoming_events()
+calendar.get_upcoming_events()
+#calendar.add_event(
+ #   summary="Test Event",
+  #  start_time=start_time,
+   # end_time=end_time,
+    #description="This is a test event added via script.",
+#)
