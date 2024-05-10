@@ -8,7 +8,7 @@ from langchain.agents import output_parsers as langchain_output_parsers
 from langchain.tools import render as langchain_render
 from langchain_core.messages import base as base_langchain_messages
 
-import models
+from CapaDatos import models
 from agents import langchain_agents
 
 _MEMORY_KEY = "chat_history"

@@ -12,12 +12,20 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
+from CapaDatos.database import MongoDatabase
+from CapaNegocio.email import SenderEmail
+from CapaNegocio.whatsapp import WhatsAppSender
+
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 
 class GoogleCalendarManager:
     def __init__(self):
         self._token = self._authenticate()
+        self.db = MongoDatabase(
+            uri="mongodb+srv://felipemolina:admin@edya2.zgsyghc.mongodb.net",
+            dbname="Software2",
+        )
 
     def check_availability(self, start_time: str, end_time: str) -> bool:
         token = self._token["token"]
@@ -27,11 +35,7 @@ class GoogleCalendarManager:
         response = requests.get(
             url,
             headers=headers,
-            params={
-                "timeMin": start_time,
-                "timeMax": end_time,
-                "maxResults": 1
-            },
+            params={"timeMin": start_time, "timeMax": end_time, "maxResults": 1},
         )
 
         print("Check Availability Response:")
@@ -149,6 +153,7 @@ class GoogleCalendarManager:
         start_time: str,
         end_time: str,
         description: Optional[str] = None,
+        patient_info: Optional[dict] = None,
     ):
         token = self._token["token"]
         url = f"https://www.googleapis.com/calendar/v3/calendars/primary/events"
@@ -156,14 +161,8 @@ class GoogleCalendarManager:
 
         event_body = {
             "summary": summary,
-            "start": {
-                "dateTime": start_time,
-                "timeZone": "America/Bogota"
-            },
-            "end": {
-                "dateTime": end_time,
-                "timeZone": "America/Bogota"
-            },
+            "start": {"dateTime": start_time, "timeZone": "America/Bogota"},
+            "end": {"dateTime": end_time, "timeZone": "America/Bogota"},
         }
 
         if description:
@@ -173,6 +172,45 @@ class GoogleCalendarManager:
 
         if response.status_code == 200:
             print("Event added successfully.")
+            if patient_info:
+                # Guardar la información del paciente en la base de datos
+                name = patient_info.get("name")
+                age = patient_info.get("age")
+                motive = patient_info.get("motive")
+                id_patient = patient_info.get("id_patient")
+                appointment_time = (
+                    start_time  # Usar el tiempo de inicio como el tiempo de la cita
+                )
+                self.db.add_patient(
+                    name=name,
+                    age=age,
+                    motive=motive,
+                    id_patient=id_patient,
+                    appointment_time=appointment_time,
+                )
+
+                # Construir el mensaje de email con los datos del paciente
+                email_message = (
+                    f"Recordatorio de cita para {patient_info.get('name')}\n"
+                )
+                email_message += f"Fecha y hora de la cita: {start_time}\n"
+                email_message += (
+                    f"Motivo de la consulta: {patient_info.get('motive')}\n"
+                )
+                email_message += f"Edad del paciente: {patient_info.get('age')}\n"
+
+                email_sender = SenderEmail()
+                email_sender.send_email(
+                    "juanfexxmolina@gmail.com", email_message, "Confirmación de Cita"
+                )
+
+                # Enviar mensaje de WhatsApp
+                whatsapp_message = f"Recordatorio de cita para {patient_info.get('name')}\nFecha y hora: {start_time}\nMotivo: {patient_info.get('motive')}"
+                whatsapp_sender = WhatsAppSender()
+                whatsapp_sender.send_whatsapp_message(
+                    "+573225131698", whatsapp_message
+                )  # Reemplaza con el número real del destinatario
+            return True
         else:
             print(f"Error: {response.status_code} - {response.text}")
 
@@ -186,9 +224,9 @@ end_time = (
 calendar = GoogleCalendarManager()
 calendar.get_free_busy_agenda()
 calendar.get_upcoming_events()
-#calendar.add_event(
- #   summary="Test Event",
-  #  start_time=start_time,
-   # end_time=end_time,
-    #description="This is a test event added via script.",
-#)
+# calendar.add_event(
+#   summary="Test Event",
+#  start_time=start_time,
+# end_time=end_time,
+# description="This is a test event added via script.",
+# )

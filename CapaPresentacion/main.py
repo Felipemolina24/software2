@@ -1,7 +1,7 @@
 import pprint
 
 from agents import langchain_executor
-from models import Chat, Message, SenderEnum
+from CapaDatos.models import Chat, Message, SenderEnum
 
 chat = Chat()
 print(chat.status)
