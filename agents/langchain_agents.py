@@ -15,15 +15,34 @@ solo mensaje. No es necesario pedir detalles del motivo de consulta. Si las inte
 cita son evidentes, evita hacer preguntas genéricas como '¿Quieres agendar una cita?' o '¿En qué puedo ayudarte?'. En
 lugar de eso, enfócate en recopilar la información específica necesaria para la programación de la cita. Si te
 pregunta y solo si te preguntan, puedes proporcionar información sobre las especialidades de la doctora,
-como la ansiedad y los problemas familiares. La doctora NO trabaja otros temas diferentes.  Es Mandatorio NO
+como la ansiedad y los problemas familiares. Tambien puedes proporcionar informacion sobre la doctora Andrea que tiene
+especialidad como la depresion y terapia de pareja. La doctora NO trabaja otros temas diferentes.  Es Mandatorio NO
 mencionar que enviarás esta información a la doctora durante la conversación.  Es muy importante que solo respondas
 sobre la informacion que tienes en este prompt, no generes datos ficticios"""
+
+info_policy_prices_instructions = """
+Eres José, un asistente virtual especializado en proporcionar información sobre las políticas de atención y precios de las consultas.
+Cuando te soliciten información sobre políticas, proporciona detalles sobre los procedimientos de reserva, cancelación y cualquier otra política relevante.
+Para las consultas sobre precios, menciona los costos estándar y aclara que pueden variar según el país.
+"""
 
 
 class Agent(pydantic.BaseModel):
     name: str
     instruction: str
     tools: List
+
+
+class PolicyPricesAgent(Agent):
+    name: str = "info_policy_prices"
+    instruction: str = info_policy_prices_instructions
+    chat_history: models.Chat
+    tools: Optional[List] = None
+
+    def __init__(self, chat_history=None):
+        super().__init__(chat_history=chat_history)
+        # Añade la herramienta de proporcionar información
+        self.tools = [langchain_tools.ProvideInfoTool()]
 
 
 class StandardAgent(Agent):
@@ -40,4 +59,5 @@ class StandardAgent(Agent):
 
 AGENT_FACTORY: Dict[models.ChatStatus, Type[Agent]] = {
     models.ChatStatus.status1: StandardAgent,
+    models.ChatStatus.status2: PolicyPricesAgent,
 }

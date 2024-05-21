@@ -5,7 +5,7 @@ class WhatsAppSender:
     def __init__(self):
         self.account_sid = "AC39c0d5426ff0036526e45018c7de846a"  # Reemplaza con tu Account SID de Twilio
         self.auth_token = (
-            "d69e5aa03e9d3285bf59bf75f08e0b35"  # Reemplaza con tu Auth Token de Twilio
+            "ac1cab95c982668d10336292ff018db0"  # Reemplaza con tu Auth Token de Twilio
         )
         self.client = Client(self.account_sid, self.auth_token)
         self.from_whatsapp_number = (

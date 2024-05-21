@@ -19,6 +19,37 @@ class _PatientInfo(pydantic.BaseModel):
     id_patient: int = pydantic.Field(..., description="numero de identificacion")
 
 
+class ProvideInfoTool(langchain_core_tools.BaseTool):
+    name: str = "provide_info_tool"
+    description: str = (
+        "Proporciona información sobre políticas de atención y precios de consulta."
+    )
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+
+    def _run(
+        self,
+        *args,
+        run_manager: Optional[langchain_core_tools.CallbackManagerForToolRun] = None,
+        **kwargs,
+    ) -> str:
+        # Ignorar args y kwargs adicionales que podrían ser pasados por el sistema
+        # Aquí puedes implementar lógica para buscar en una base de datos o configuración
+        # Por ahora, simplemente devolvemos un mensaje estático
+        return """
+                Políticas de Atención:
+                - Todas las citas deben ser reservadas con al menos 48 horas de antelación.
+                - Se requiere un aviso de cancelación con 24 horas de anticipación para evitar cargos.
+                - Las citas que no sean canceladas con al menos 24 horas de antelación serán sujetas a un cargo del 50% del costo de la consulta.
+                - Los pacientes deben llegar al menos 15 minutos antes de su hora programada para completar el papeleo necesario.
+
+                Precios:
+                - El costo de la consulta en Colombia es de 150,000 pesos colombianos.
+                - Para pacientes fuera de Colombia, el costo de la consulta es de 50 dólares estadounidenses.
+                """
+
+
 class SendPatientInfo(langchain_core_tools.BaseTool):
     """Tool that fetches active deployments."""
 

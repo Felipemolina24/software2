@@ -87,6 +87,9 @@ def _invoke_with_chat_history(
     )
     llm = langchain_chat_models.ChatOpenAI(model="gpt-3.5-turbo", temperature=0.1)  # type: ignore
 
+    if agent.tools is None:
+        agent.tools = []
+
     llm_with_tools = llm.bind(
         functions=[
             langchain_render.format_tool_to_openai_function(t) for t in agent.tools

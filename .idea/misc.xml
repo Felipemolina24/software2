@@ -6,6 +6,9 @@
     <option name="sdkName" value="agents" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="proyecto_agentes" project-jdk-type="Python SDK" />
+  <component name="PyCharmProfessionalAdvertiser">
+    <option name="shown" value="true" />
+  </component>
   <component name="PythonCompatibilityInspectionAdvertiser">
     <option name="version" value="3" />
   </component>
